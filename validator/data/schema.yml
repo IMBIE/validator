@@ -1,0 +1,62 @@
+- !schema
+  name: dmdt
+  description: IMBIE3 dmdt data format
+  columns:
+  - name: contributor
+    type: Username
+    property: true
+  - name: experiment_group
+    type: ExperimentGroup
+    property: true
+  - name: basin_group
+    type: BasinGroup
+    property: true
+  - name: basin_id
+    type: BasinID
+    property: true
+  - name: area_basin
+    type: float
+  - name: area_observed
+    type: float
+  - name: date_0
+    type: float
+    interval: "monthly"
+  - name: date_1
+    type: float
+  - name: dmdt
+    type: float
+  - name: dmdt_sd
+    type: float
+
+- !schema
+  name: dm
+  description: IMBIE3 dm data format
+  columns:
+  - name: contributor
+    type: Username
+    property: true
+  - name: experiment_group
+    type: ExperimentGroup
+    property: true
+  - name: basin_group
+    type: BasinGroup
+    property: true
+  - name: basin_id
+    type: BasinID
+    property: true
+  - name: area_basin
+    type: float
+  - name: area_observed
+    type: float
+  - name: date
+    type: float
+    interval: "yearly"
+  - name: dm
+    type: float
+  - name: dm_sd
+    type: float
+
+
+# interval: "monthly" # "yearly", value
+# interval-mode: "error" # "warning", "interpolate"
+# interval-tolerance: 4.16e-3
