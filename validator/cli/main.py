@@ -1,9 +1,13 @@
 import argparse as ap
+import shutil
 import sys
 import pkgutil
 import io
 import json
+import tempfile
+
 from validator.const.severity import ExitCode, Severity
+from validator.core.unpack import unpack
 
 from validator.model.schema import Schema
 from validator.core.validate import validate_file
@@ -26,7 +30,6 @@ def create_parser(name: str, description: str) -> ap.ArgumentParser:
         "-f",
         "--format",
         metavar="FORMAT",
-        required=True,
         type=str,
         help="name of file format schema to use",
     )
@@ -54,23 +57,44 @@ def main() -> None:
     parser = create_parser(__name__, "IMBIE3 validation tool")
     args = parser.parse_args()
 
-    with args.schema as schema:
-        schema = Schema.from_file(schema, args.format)
-
     exit_code = ExitCode.ok
 
-    with args.input as infile:
-        messages = list(validate_file(infile, schema))
-    for message in messages:
-        if message.severity == Severity.error:
-            exit_code = ExitCode.validation_failed
+    _dir = None
 
-    if args.json:
-        json.dump([m.to_json() for m in messages], args.output, indent=2)
+    if args.input.name.endswith(".json"):
+        _dir = tempfile.mkdtemp()
+        items = list(unpack(args.input.name, _dir))
+
+        inputs = [item.filename for item in items]
+        formats = [item.format_name for item in items]
+        sys.stderr.writelines("\n".join(inputs) + "\n")
+
     else:
+        inputs = [args.input]
+        formats = [args.format]
+
+    with args.schema as schema:
+        schemas = Schema.read_all(schema)
+
+    for item, fmt in zip(inputs, formats):
+        if format is None:
+            continue
+        schema = schemas[fmt]
+        with open(item) as infile:
+            messages = list(validate_file(infile, schema))
         for message in messages:
-            print(f"title: {message.title}", file=args.output)
-            print(f"severity: {message.severity}", file=args.output)
-            print(f"description: {message.description}", file=args.output)
+            if message.severity == Severity.error:
+                exit_code = ExitCode.validation_failed
+
+        if args.json:
+            json.dump([m.to_json() for m in messages], args.output, indent=2)
+        else:
+            for message in messages:
+                print(f"title: {message.title}", file=args.output)
+                print(f"severity: {message.severity}", file=args.output)
+                print(f"description: {message.description}", file=args.output)
+
+    if _dir is not None:
+        shutil.rmtree(_dir)
 
     sys.exit(exit_code.value)

@@ -16,6 +16,7 @@
     property: true
   - name: area_basin
     type: float
+    unique: true
   - name: area_observed
     type: float
   - name: date_0
@@ -46,14 +47,43 @@
     property: true
   - name: area_basin
     type: float
+    unique: true
   - name: area_observed
     type: float
   - name: date
     type: float
-    interval: "yearly"
+    # interval: "yearly"
   - name: dm
     type: float
   - name: dm_sd
+    type: float
+
+- !schema
+  name: iom-dmdt
+  description: IMBIE3 dmdt data format for IOM group
+  columns:
+  - name: contributor
+    type: Username
+    property: true
+  - name: experiment_group
+    type: ExperimentGroup
+    property: true
+  - name: basin_group
+    type: BasinGroup
+    property: true
+  - name: basin_id
+    type: BasinID
+    property: true
+  - name: area_basin
+    type: float
+    unique: true
+  - name: area_observed
+    type: float
+  - name: date
+    type: float
+  - name: dmdt
+    type: float
+  - name: dmdt_sd
     type: float
 
 

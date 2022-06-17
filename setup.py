@@ -29,6 +29,12 @@ setup(
     # package_dir={"samplepackage": "samplepackage"}, # to uncomment if data to add to the package
     # package_data={"samplepackage": ["data/*.json"]},# to uncomment if data to add to the package
     install_requires=ALL_REQS,
-    entry_points={"console_scripts": ["imbie-validate = validator.cli:main"]},
+    entry_points={
+        "console_scripts": [
+            "imbie-validate = validator.cli:main",
+            "imbie-unpack = validator.cli:unpack",
+            "imbie-report = validator.cli:report",
+        ]
+    },
     include_package_data=True,
 )

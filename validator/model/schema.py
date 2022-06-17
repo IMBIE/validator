@@ -58,3 +58,10 @@ class Schema:
                 return entry
 
         raise KeyError(f"no such format defined in schema: '{format_name}'")
+
+    @classmethod
+    def read_all(cls, file: io.StringIO) -> Dict[str, "Schema"]:
+        from validator.data.loader import Loader
+
+        data = yaml.load(file, Loader)
+        return {entry.name: entry for entry in data}

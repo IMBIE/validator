@@ -5,6 +5,8 @@ class ExperimentGroup(Enum):
     ra = "RA"
     gmb = "GMB"
     iom = "IOM"
+    smb = "SMB"
+    gia = "GIA"
 
     @property
     def full_name(self) -> str:
@@ -12,10 +14,11 @@ class ExperimentGroup(Enum):
 
     @classmethod
     def parse(cls, string: str) -> "ExperimentGroup":
-        string = string.strip().upper()
+        string = string.upper()
 
         for value, name in FULL_NAMES.items():
-            if string in name.upper():
+            string_whitespace = string.replace("-", " ").replace("_", " ")
+            if string_whitespace in name.upper():
                 return value
 
         return cls(string)
@@ -24,5 +27,7 @@ class ExperimentGroup(Enum):
 FULL_NAMES = {
     ExperimentGroup.ra: "Radar Altimetry",
     ExperimentGroup.gmb: "Gravimetry",
-    ExperimentGroup.iom: "Mass Balance",
+    ExperimentGroup.iom: "Mass Budget",
+    ExperimentGroup.gia: "Glacial Isostatic Adjustment",
+    ExperimentGroup.smb: "Surface Mass Balance",
 }

@@ -108,14 +108,22 @@ class IceSheet(BasinID):
     AIS = "AIS"
     ALL = "ALL"
 
+    @classmethod
+    def parse(cls, value: str) -> "IceSheet":
+        for sheet in cls:
+            if sheet.value.startswith(value.upper()):
+                return sheet
+
+        raise ValueError(f"unknown ice sheet: '{value}'")
+
 
 def parse_basin(group: str, basin: str) -> Tuple[BasinGroup, BasinID]:
     try:
-        basin: BasinID = IceSheet.parse(basin)
+        basin_enum: BasinID = IceSheet.parse(basin)
     except ValueError:
         group: BasinGroup = BasinGroup.parse(group)
         _type = group.basins_type()
 
         return group, _type.parse(basin)
     else:
-        return BasinGroup.GENERIC, basin
+        return BasinGroup.GENERIC, basin_enum

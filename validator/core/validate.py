@@ -32,11 +32,11 @@ def validate_file(data_file: FileIO, schema: Schema) -> Iterator[Message]:
                     yield Message(
                         Severity.error,
                         "Invalid data interval",
-                        f"Column {column.name} does not match expected interval: {column.interval}",
+                        f'{series}: Column "{column.name}" does not match expected interval: {column.interval}',
                     )
             if column.unique and np.unique(values).size > 1:
                 yield Message(
                     Severity.error,
                     "Multiple values in unique column",
-                    f"Column {column.name} expects a single value per series",
+                    f'{series}: Column "{column.name}" expects a single value per series',
                 )
