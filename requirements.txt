@@ -2,3 +2,7 @@ pandas
 pyyaml
 black
 numpy
+pdfkit
+jinja2
+matplotlib
+seaborn
