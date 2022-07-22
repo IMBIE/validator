@@ -1,8 +1,14 @@
 from typing import Tuple
 import numpy as np
-
+from enum import Enum
 
 from .lscov import lscov
+
+
+class LSQMethod(Enum):
+    normal = "NORMAL"
+    regress = "REGRESS"
+    weighted = "WEIGHTED"
 
 
 def dm_to_dmdt(
@@ -16,7 +22,7 @@ def dm_to_dmdt(
     lsq_method: LSQMethod = LSQMethod.normal,
     tapering: bool = False,
     min_tapering: float = 0.75,
-) -> Tuple[np.ndarray, np.ndarray]:
+) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
     """
     create dmdt time series from dm data
     """

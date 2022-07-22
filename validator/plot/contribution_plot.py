@@ -2,6 +2,7 @@ import base64
 import io
 from typing import Any
 from validator.const.basins import IceSheet
+from validator.const.experiment_groups import ExperimentGroup
 from validator.model.contribution import Contribution
 
 import matplotlib.pyplot as plt
@@ -22,6 +23,7 @@ def plot_single(
     title: str = None,
     ylabel: str = None,
     xlabel: str = None,
+    fill: bool = True,
     **style_opts: Any,
 ) -> None:
     """
@@ -36,7 +38,8 @@ def plot_single(
         ax.set_ylabel(ylabel)
 
     line, *_ = ax.errorbar(x, y, yerr=yerr, **style_opts)
-    ax.fill_between(x, y - yerr, y + yerr, alpha=0.5, color=line.get_color())
+    if fill:
+        ax.fill_between(x, y - yerr, y + yerr, alpha=0.5, color=line.get_color())
 
 
 def contribution_plot(contribution: Contribution):
@@ -46,6 +49,14 @@ def contribution_plot(contribution: Contribution):
 
     data_file = io.BytesIO()
     sheets = [IceSheet.APIS, IceSheet.EAIS, IceSheet.WAIS, IceSheet.GRIS]
+
+    col = {
+        ExperimentGroup.gmb: "green",
+        ExperimentGroup.ra: "red",
+        ExperimentGroup.iom: "blue",
+    }.get(contribution.experiment_group, "gray")
+
+    print(contribution.experiment_group)
 
     sns.set(rc={"figure.dpi": 300, "savefig.dpi": 300})
     fig, axs = plt.subplots(2, 4)
@@ -60,6 +71,15 @@ def contribution_plot(contribution: Contribution):
         for i, sheet in enumerate(sheets):
             series: Series = contribution.get(basin_id=sheet, format=fmt)
 
+            if series is None:
+                if fmt == "dm":
+                    series = contribution.get(basin_id=sheet, format="dmdt").to_dm()
+                else:
+                    series = contribution.get(basin_id=sheet, format="dm").to_dmdt()
+                computed = True
+            else:
+                computed = False
+
             ax: plt.Axes = axs[j, i]
 
             if j == 0:
@@ -73,7 +93,7 @@ def contribution_plot(contribution: Contribution):
                 x = series.data["date"]
                 y = series.data[fmt]
                 yerr = series.data[f"{fmt}_sd"]
-                plot_single(ax, x, y, yerr)
+                plot_single(ax, x, y, yerr, color=col)
             else:
                 ax.set_xticks([], [])
                 ax.set_yticks([], [])

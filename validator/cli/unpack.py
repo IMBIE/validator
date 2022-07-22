@@ -31,6 +31,9 @@ def create_parser(name: str, desc: str) -> ap.ArgumentParser:
         help="root output directory",
         default=".",
     )
+    parser.add_argument(
+        "--strip-data", action="store_true", help="remove data fields from output JSON"
+    )
 
     return parser
 
@@ -39,5 +42,5 @@ def main() -> None:
     parser = create_parser(__name__, "IMBIE3 submission unpacker")
     args = parser.parse_args()
 
-    for output in unpack(args.input.name, args.out):
+    for output in unpack(args.input.name, args.out, strip=args.strip_data):
         print(f"unpacked {output.fieldname}, created {output.filename}")

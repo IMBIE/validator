@@ -108,7 +108,9 @@ class Contribution:
 
         if data[experiment_group_column.name][header_skip_idx:].unique().size > 1:
             raise FormatError("file contains multiple definitions for experiment group")
-        experiment_group = data[experiment_group_column.name][header_skip_idx]
+        experiment_group = ExperimentGroup.parse(
+            data[experiment_group_column.name][header_skip_idx]
+        )
 
         prop_columns = schema.get_property_columns()
         series = []

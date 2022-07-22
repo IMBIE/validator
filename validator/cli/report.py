@@ -3,11 +3,12 @@ import io
 import os
 import tempfile
 import pdfkit
+import sys
 
 from validator.cli.main import DEFAULT_SCHEMA
 
 from validator.core.unpack import from_directory, unpack
-from validator.model.contribution import Contribution
+from validator.model.contribution import Contribution, FormatError
 from validator.model.schema import Schema
 from validator.report.report import render_report
 
@@ -74,7 +75,12 @@ def main() -> None:
     for item in items:
         data_path = item.filename
 
-        contribution = Contribution.from_file(data_path, schemas[item.format_name])
+        try:
+            contribution = Contribution.from_file(data_path, schemas[item.format_name])
+        except FormatError as e:
+            sys.stderr.write(f"cannot parse file: {data_path}")
+            sys.exit(-1)
+
         report_html = render_report(contribution)
 
         if outpath is None:

@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from fnmatch import fnmatch
 import json
 import os
+import sys
 from typing import Any, Dict, List
 
 from validator.const.experiment_groups import ExperimentGroup
@@ -11,7 +12,7 @@ UPLOADS = {
     ExperimentGroup.gmb: [
         "time-series-upload",
         "mass-rate-upload",
-        "methods-and-errors",
+        "methods-and-errors/upload",
     ],
     ExperimentGroup.iom: [
         "time-series-discharge-upload",
@@ -24,26 +25,26 @@ UPLOADS = {
         "discrete-rates-flux-gates-upload",
         "discrete-rates-metadata-upload",
         "discrete-rates-total-mass-change-upload",
-        "methods-and-errors",
+        "methods-and-errors/upload",
     ],
     ExperimentGroup.ra: [
         "time-series-upload",
         "mean-rate-upload",
-        "methods-and-errors",
+        "methods-and-errors/upload",
     ],
     ExperimentGroup.gia: [
         "uplift-rates-data",
         "uplift-rates-meta",
         "stokes-coefficients-data",
         "stokes-coefficients-meta",
-        "methods-and-errors",
+        "methods-and-errors/upload",
     ],
     ExperimentGroup.smb: [
         "mass-balance-data",
         "mass-balance-meta",
         "gridded-mass-balance-data",
         "gridded-mass-balance-meta",
-        "methods-and-errors",
+        "methods-and-errors/upload",
     ],
 }
 
@@ -109,7 +110,7 @@ def from_directory(dirpath: str) -> List[UnpackingRecord]:
     ]
 
 
-def unpack(filepath: str, outdir: str) -> List[UnpackingRecord]:
+def unpack(filepath: str, outdir: str, *, strip: bool = False) -> List[UnpackingRecord]:
     """
     b64 decode data uploads from submission JSON
     """
@@ -122,7 +123,11 @@ def unpack(filepath: str, outdir: str) -> List[UnpackingRecord]:
     # print("reading", filepath)
 
     with open(filepath) as f:
-        submission: Dict[str, Any] = json.load(f)
+        try:
+            submission: Dict[str, Any] = json.load(f)
+        except json.JSONDecodeError:
+            sys.stderr.write(f"could not parse file: {filepath}\n")
+            sys.exit(-1)
 
     group = ExperimentGroup.parse(submission.get("group"))
 
@@ -132,7 +137,11 @@ def unpack(filepath: str, outdir: str) -> List[UnpackingRecord]:
 
     for field in UPLOADS[group]:
 
-        node = submission.get(field, {})
+        node = submission
+        for part in field.split("/"):
+            node = node.get(part, {})
+
+        # node = submission.get(field, {})
 
         if not node.get("data"):
             continue
@@ -149,6 +158,10 @@ def unpack(filepath: str, outdir: str) -> List[UnpackingRecord]:
         with open(outpath, "wb") as f:
             f.write(base64.b64decode(data, validate=True))
         unpacked_files.append(UnpackingRecord(outpath, field, group))
+
+        if strip:
+            first, *_ = field.split("/")
+            del submission[first]
 
     json_outpath = os.path.join(outroot, f"{filename}.json")
 
