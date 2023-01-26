@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
+    <meta charset="UTF-8">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
     <title>IMBIE Submission Report</title>
     <style>
@@ -131,46 +132,11 @@ table {
             {% endfor %}
           </tbody>
         </table>
-        <!-- <table class="table table-striped">
-          <tr>
-            <th>Start Date</th>
-            <td>{{ statistics.start.strftime("%Y-%m-%d") or "????-??-??" }}</td>
-          </tr>
-          <tr>
-            <th>End Date</th>
-            <td>{{ statistics.end.strftime("%Y-%m-%d") or "????-??-??" }}</td>
-          </tr>
-          <tr>
-            <th>Duration</th>
-            <td>{{ statistics.duration.days or "?" }} days</td>
-          </tr>
-          <tr>
-            <th>Mean Sampling Interval</th>
-            <td>{{ statistics.interval.days or "?" }} days</td>
-          </tr>
-          <tr>
-            <th>Mean dM/dt</th>
-            <td>{{ statistics.dmdt or "?" }} (Gt/yr)</td>
-          </tr>
-        </table>
-      </section>
-      <section class="section__coverage">
-        <h3>Coverage</h3>
-        <table class="table table-striped">
-          <tr>
-            <td></td>
-            <th>dM</th>
-            <th>dM/dt</th>
-          </tr>
-          {% for basin in basins %}
-          <tr>
-            <th>{{ basin["basin"].value }}</th>
-            <td>{{ "✓" if basin["dm"] else "X" }}</td>
-            <td>{{ "✓" if basin["dmdt"] else "X" }}</td>
-          </tr>
-          {% endfor %}
-        </table>
-      </section> -->
+        <p>
+          <img src="{{ images.check }}" width="12"/> data provided in submission /
+          <img src="{{ images.gear }}" width="12"/> no data provided, data calculated from submission /
+          <img src="{{ images.cross }}" width="12"/> no data provided, cannot be calculated from submission
+        </p>
     </main>
   </body>
 </html>

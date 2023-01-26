@@ -40,6 +40,7 @@ def create_parser(name: str, desc: str) -> ap.ArgumentParser:
     parser.add_argument(
         "-o", "--output", type=writeable_file_or_folder, help="location to save output"
     )
+    parser.add_argument("-f", "--format", type=str, help="html, pdf", default="pdf")
     group = parser.add_argument_group("advanced options")
     group.add_argument("--template", type=str, help="report template file")
     group.add_argument(
@@ -60,35 +61,51 @@ def main() -> None:
     with args.schema as schema:
         schemas = Schema.read_all(schema)
 
+    if args.output is not None:
+        print(f"generating report: '{args.input}'")
+
     if os.path.isfile(args.input):
         root_path = tempfile.mkdtemp()
-        items = unpack(args.input, root_path)
+        items = unpack(args.input, root_path, data_only=True)
     else:
-        items = from_directory(args.input)
+        items = from_directory(args.input, data_only=True)
 
     outpath = args.output
     if outpath is not None and os.path.isdir(args.output):
         name, _ = os.path.splitext(args.input)
         name = os.path.basename(name)
-        outpath = os.path.join(args.output, name + ".pdf")
+        outpath = os.path.join(args.output, name + "." + args.format)
+
+    contribs: list[Contribution] = []
 
     for item in items:
         data_path = item.filename
 
         try:
             contribution = Contribution.from_file(data_path, schemas[item.format_name])
-        except FormatError as e:
-            sys.stderr.write(f"cannot parse file: {data_path}")
+        except (FormatError, ValueError) as e:
+            sys.stderr.write(f"cannot parse file: {data_path}\n")
+            sys.stderr.write(str(e) + "\n")
             sys.exit(-1)
 
-        report_html = render_report(contribution)
+        contribs.append(contribution)
 
-        if outpath is None:
-            print(report_html)
-        else:
-            tmp_file = io.StringIO()
-            tmp_file.write(report_html)
-            tmp_file.seek(0)
+    base, *others = contribs
+    contribution = base.join(*others)
+    contribution.sum_regions()
 
-            pdfkit.from_file(tmp_file, outpath)
-            print(f"{outpath} created")
+    report_html = render_report(contribution)
+
+    if outpath is None:
+        print(report_html)
+    elif args.format == "pdf":
+        tmp_file = io.StringIO()
+        tmp_file.write(report_html)
+        tmp_file.seek(0)
+
+        pdfkit.from_file(tmp_file, outpath)
+        print(f"{outpath} created")
+    else:
+        with open(outpath, "w") as f:
+            f.write(report_html)
+        print(f"{outpath} created")

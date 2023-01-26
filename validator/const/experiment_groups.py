@@ -2,11 +2,11 @@ from enum import Enum
 
 
 class ExperimentGroup(Enum):
-    ra = "RA"
-    gmb = "GMB"
-    iom = "IOM"
-    smb = "SMB"
-    gia = "GIA"
+    RA = "RA"
+    GMB = "GMB"
+    IOM = "IOM"
+    SMB = "SMB"
+    GIA = "GIA"
 
     @property
     def full_name(self) -> str:
@@ -14,10 +14,10 @@ class ExperimentGroup(Enum):
 
     @classmethod
     def parse(cls, string: str) -> "ExperimentGroup":
-        string = string.upper()
+        string = string.strip().upper()
+        string_whitespace = string.replace("-", " ").replace("_", " ")
 
         for value, name in FULL_NAMES.items():
-            string_whitespace = string.replace("-", " ").replace("_", " ")
             if string_whitespace in name.upper():
                 return value
 
@@ -25,9 +25,9 @@ class ExperimentGroup(Enum):
 
 
 FULL_NAMES = {
-    ExperimentGroup.ra: "Radar Altimetry",
-    ExperimentGroup.gmb: "Gravimetry",
-    ExperimentGroup.iom: "Mass Budget",
-    ExperimentGroup.gia: "Glacial Isostatic Adjustment",
-    ExperimentGroup.smb: "Surface Mass Balance",
+    ExperimentGroup.RA: "Radar Altimetry",
+    ExperimentGroup.GMB: "Gravimetry",
+    ExperimentGroup.IOM: "Mass Budget",
+    ExperimentGroup.GIA: "Glacial Isostatic Adjustment",
+    ExperimentGroup.SMB: "Surface Mass Balance",
 }

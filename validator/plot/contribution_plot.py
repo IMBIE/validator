@@ -11,7 +11,10 @@ import numpy as np
 
 from validator.model.series import Series
 
-YLABELS = {"dm": "$dM (Gt)$", "dmdt": "$\\frac{dM}{dt} (Gt/y)$"}
+YLABELS = {
+    "dm": "$dM (Gt)$",
+    "dmdt": "$\\frac{dM}{dt} (Gt/y)$",
+}
 
 
 def plot_single(
@@ -42,6 +45,27 @@ def plot_single(
         ax.fill_between(x, y - yerr, y + yerr, alpha=0.5, color=line.get_color())
 
 
+def plot_single_dmdt(
+    ax: plt.Axes,
+    x0: np.ndarray,
+    x1: np.ndarray,
+    y: np.ndarray,
+    yerr: np.ndarray,
+    **kwargs,
+) -> None:
+    """
+    plot a single dm/dt contribution
+    """
+    for i, yval in enumerate(y):
+        plot_single(
+            ax,
+            np.asarray([x0[i], x1[i]]),
+            np.asarray([yval, yval]),
+            np.asarray([yerr[i], yerr[i]]),
+            **kwargs,
+        )
+
+
 def contribution_plot(contribution: Contribution):
     """
     plot all ice-sheet series in a contribution
@@ -51,12 +75,10 @@ def contribution_plot(contribution: Contribution):
     sheets = [IceSheet.APIS, IceSheet.EAIS, IceSheet.WAIS, IceSheet.GRIS]
 
     col = {
-        ExperimentGroup.gmb: "green",
-        ExperimentGroup.ra: "red",
-        ExperimentGroup.iom: "blue",
+        ExperimentGroup.GMB: "green",
+        ExperimentGroup.RA: "red",
+        ExperimentGroup.IOM: "blue",
     }.get(contribution.experiment_group, "gray")
-
-    print(contribution.experiment_group)
 
     sns.set(rc={"figure.dpi": 300, "savefig.dpi": 300})
     fig, axs = plt.subplots(2, 4)
@@ -66,16 +88,32 @@ def contribution_plot(contribution: Contribution):
     height_inches = width_inches * aspect
     fig.set_size_inches(width_inches, height_inches)
 
+    # dmdt_fmt_query = (
+    #     "iom-dmdt" if contribution.experiment_group == ExperimentGroup.IOM else "dmdt"
+    # )
+    dmdt_fmt_query = "dmdt"
+
     # dM plots
     for j, fmt in enumerate(["dm", "dmdt"]):
         for i, sheet in enumerate(sheets):
-            series: Series = contribution.get(basin_id=sheet, format=fmt)
+            fmt_query = dmdt_fmt_query if fmt == "dmdt" else fmt
+            series: Series = contribution.get(basin_id=sheet, format=fmt_query)
 
             if series is None:
                 if fmt == "dm":
-                    series = contribution.get(basin_id=sheet, format="dmdt").to_dm()
+                    dmdt_series = contribution.get(
+                        basin_id=sheet, format=dmdt_fmt_query
+                    )
+                    if dmdt_series is not None:
+                        series = dmdt_series.to_dm()
+                    else:
+                        series = None
                 else:
-                    series = contribution.get(basin_id=sheet, format="dm").to_dmdt()
+                    dm_series = contribution.get(basin_id=sheet, format="dm")
+                    if dm_series is not None:
+                        series = dm_series.to_dmdt()
+                    else:
+                        series = None
                 computed = True
             else:
                 computed = False
@@ -90,10 +128,30 @@ def contribution_plot(contribution: Contribution):
                 ax.set_ylabel(YLABELS[fmt])
 
             if series:
-                x = series.data["date"]
-                y = series.data[fmt]
-                yerr = series.data[f"{fmt}_sd"]
-                plot_single(ax, x, y, yerr, color=col)
+                if "date_0" in series.data.columns:
+                    x0 = series.data["date_0"].values
+                    x1 = series.data["date_1"].values
+                    y = series.data["dmdt"].values
+                    yerr = series.data["dmdt_sd"].values
+
+                    plot_single_dmdt(ax, x0, x1, y, yerr, color=col)
+                else:
+                    x = series.data["date"]
+                    y = series.data[fmt]
+                    yerr = series.data[f"{fmt}_sd"]
+                    plot_single(ax, x, y, yerr, color=col)
+                ymin, ymax = ax.get_ylim()
+                yrange = ymax - ymin
+
+                min_yrange = 10 * np.nanmean(series.data[f"{fmt}_sd"])
+                if yrange < min_yrange:
+                    ymid = (ymax + ymin) / 2
+                    ymin = ymid - (min_yrange / 2)
+                    ymax = ymid + (min_yrange / 2)
+
+                    if np.isfinite([ymin, ymax]).all():
+                        ax.set_ylim(ymin, ymax)
+                ax.axhline(0, color="gray", ls="-", lw=2)
             else:
                 ax.set_xticks([], [])
                 ax.set_yticks([], [])

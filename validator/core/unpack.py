@@ -9,37 +9,38 @@ from typing import Any, Dict, List
 from validator.const.experiment_groups import ExperimentGroup
 
 UPLOADS = {
-    ExperimentGroup.gmb: [
+    ExperimentGroup.GMB: [
         "time-series-upload",
         "mass-rate-upload",
         "methods-and-errors/upload",
     ],
-    ExperimentGroup.iom: [
-        "time-series-discharge-upload",
-        "time-series-surface-mass-balance-upload",
-        "time-series-flux-gates-upload",
-        "time-series-metadata-upload",
+    ExperimentGroup.IOM: [
+        # "time-series-discharge-upload",
+        # "time-series-surface-mass-balance-upload",
+        # "time-series-flux-gates-upload",
+        # "time-series-metadata-upload",
         "time-series-total-mass-change-upload",
-        "discrete-rates-discharge-upload",
-        "discrete-rates-surface-mass-balance-upload",
-        "discrete-rates-flux-gates-upload",
-        "discrete-rates-metadata-upload",
+        # "discrete-rates-discharge-upload",
+        # "discrete-rates-surface-mass-balance-upload",
+        # "discrete-rates-flux-gates-upload",
+        # "discrete-rates-metadata-upload",
         "discrete-rates-total-mass-change-upload",
+        "time-series-accumulation-upload",
         "methods-and-errors/upload",
     ],
-    ExperimentGroup.ra: [
+    ExperimentGroup.RA: [
         "time-series-upload",
         "mean-rate-upload",
         "methods-and-errors/upload",
     ],
-    ExperimentGroup.gia: [
+    ExperimentGroup.GIA: [
         "uplift-rates-data",
         "uplift-rates-meta",
         "stokes-coefficients-data",
         "stokes-coefficients-meta",
         "methods-and-errors/upload",
     ],
-    ExperimentGroup.smb: [
+    ExperimentGroup.SMB: [
         "mass-balance-data",
         "mass-balance-meta",
         "gridded-mass-balance-data",
@@ -52,14 +53,15 @@ FORMATS = {
     "time-series-upload": "dm",
     "mass-rate-upload": "dmdt",
     "mean-rate-upload": "dmdt",
-    "time-series-discharge-upload": "dm",
-    "time-series-surface-mass-balance-upload": "dm",
-    "time-series-flux-gates-upload": "dm",
+    # "time-series-discharge-upload": "dm",
+    # "time-series-surface-mass-balance-upload": "dm",
+    # "time-series-flux-gates-upload": "dm",
     "time-series-total-mass-change-upload": "dm",
-    "discrete-rates-discharge-upload": "dmdt_iom",
-    "discrete-rates-surface-mass-balance-upload": "dmdt_iom",
-    "discrete-rates-flux-gates-upload": "dmdt_iom",
-    "discrete-rates-total-mass-change-upload": "dmdt_iom",
+    # "discrete-rates-discharge-upload": "iom-dmdt",
+    # "discrete-rates-surface-mass-balance-upload": "iom-dmdt",
+    # "discrete-rates-flux-gates-upload": "iom-dmdt",
+    "discrete-rates-total-mass-change-upload": "dmdt",
+    "time-series-accumulation-upload": "dmdt",
 }
 
 
@@ -89,7 +91,7 @@ def first_in_directory(path: str, filter: str = None) -> str:
     return res
 
 
-def from_directory(dirpath: str) -> List[UnpackingRecord]:
+def from_directory(dirpath: str, *, data_only: bool = False) -> List[UnpackingRecord]:
     """
     get list of uploaded files from a previously
     unpacked submission
@@ -101,16 +103,24 @@ def from_directory(dirpath: str) -> List[UnpackingRecord]:
 
     group = ExperimentGroup.parse(data.get("group"))
 
+    is_data = (
+        lambda fieldname: "methods-and-errors" not in fieldname
+        and "flux-gates" not in fieldname
+    )
+
     return [
         UnpackingRecord(
             first_in_directory(os.path.join(dirpath, fieldname)), fieldname, group
         )
         for fieldname in UPLOADS[group]
         if os.path.exists(os.path.join(dirpath, fieldname))
+        and (not data_only or is_data(fieldname))
     ]
 
 
-def unpack(filepath: str, outdir: str, *, strip: bool = False) -> List[UnpackingRecord]:
+def unpack(
+    filepath: str, outdir: str, *, strip: bool = False, data_only: bool = False
+) -> List[UnpackingRecord]:
     """
     b64 decode data uploads from submission JSON
     """
@@ -136,6 +146,9 @@ def unpack(filepath: str, outdir: str, *, strip: bool = False) -> List[Unpacking
     # get file upload field names from group id
 
     for field in UPLOADS[group]:
+
+        if not data_only and "methods-and-errors" in field:
+            continue
 
         node = submission
         for part in field.split("/"):

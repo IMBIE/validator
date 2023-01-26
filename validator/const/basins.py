@@ -61,14 +61,18 @@ class ZwallyBasin(BasinID):
     Z3_1 = "3.1"
     Z3_2 = "3.2"
     Z3_3 = "3.3"
+    Z4_0 = "4.0"  # basin 4.0: may need to remove this
     Z4_1 = "4.1"
     Z4_2 = "4.2"
     Z4_3 = "4.3"
     Z5_0 = "5.0"
+    Z6_0 = "6.0"  # basin 6.0: may need to remove this
     Z6_1 = "6.1"
     Z6_2 = "6.2"
+    Z7_0 = "7.0"  # basin 7.0: may need to remove this
     Z7_1 = "7.1"
     Z7_2 = "7.2"
+    Z8_0 = "8.0"  # basin 8.0: may need to remove this
     Z8_1 = "8.1"
     Z8_2 = "8.2"
 
@@ -96,7 +100,7 @@ class RignotBasin(BasinID):
     NE = "NE"
     SE = "SE"
     SW = "SW"
-    CS = "CW"
+    CW = "CW"
     NW = "NW"
 
 
@@ -110,20 +114,119 @@ class IceSheet(BasinID):
 
     @classmethod
     def parse(cls, value: str) -> "IceSheet":
+        value = value.strip().upper()
+
+        if value == "GIS":
+            return cls.GRIS
         for sheet in cls:
-            if sheet.value.startswith(value.upper()):
+            if sheet.value.startswith(value):
                 return sheet
 
         raise ValueError(f"unknown ice sheet: '{value}'")
 
 
 def parse_basin(group: str, basin: str) -> Tuple[BasinGroup, BasinID]:
+    from validator.model.contribution import FormatError
+
+    basin = str(basin)
+
     try:
         basin_enum: BasinID = IceSheet.parse(basin)
     except ValueError:
         group: BasinGroup = BasinGroup.parse(group)
         _type = group.basins_type()
 
-        return group, _type.parse(basin)
+        try:
+            return group, _type.parse(basin)
+        except ValueError:
+            raise FormatError(f"unknown {group} basin: '{basin}'")
     else:
         return BasinGroup.GENERIC, basin_enum
+
+
+REGIONS_ZWALLY: dict[IceSheet, list[ZwallyBasin]] = {
+    IceSheet.APIS: [
+        ZwallyBasin.Z24,
+        ZwallyBasin.Z25,
+        ZwallyBasin.Z26,
+        ZwallyBasin.Z27,
+    ],
+    IceSheet.EAIS: [
+        ZwallyBasin.Z2,
+        ZwallyBasin.Z3,
+        ZwallyBasin.Z4,
+        ZwallyBasin.Z5,
+        ZwallyBasin.Z6,
+        ZwallyBasin.Z7,
+        ZwallyBasin.Z8,
+        ZwallyBasin.Z9,
+        ZwallyBasin.Z10,
+        ZwallyBasin.Z11,
+        ZwallyBasin.Z12,
+        ZwallyBasin.Z13,
+        ZwallyBasin.Z14,
+        ZwallyBasin.Z15,
+        ZwallyBasin.Z16,
+        ZwallyBasin.Z17,
+    ],
+    IceSheet.WAIS: [
+        ZwallyBasin.Z1,
+        ZwallyBasin.Z18,
+        ZwallyBasin.Z19,
+        ZwallyBasin.Z20,
+        ZwallyBasin.Z21,
+        ZwallyBasin.Z22,
+        ZwallyBasin.Z23,
+    ],
+    IceSheet.GRIS: [
+        ZwallyBasin.Z1_1,
+        ZwallyBasin.Z1_2,
+        ZwallyBasin.Z1_3,
+        ZwallyBasin.Z1_4,
+        ZwallyBasin.Z2_1,
+        ZwallyBasin.Z2_2,
+        ZwallyBasin.Z3_1,
+        ZwallyBasin.Z3_2,
+        ZwallyBasin.Z3_3,
+        ZwallyBasin.Z4_1,
+        ZwallyBasin.Z4_2,
+        ZwallyBasin.Z4_3,
+        ZwallyBasin.Z5_0,
+        ZwallyBasin.Z6_1,
+        ZwallyBasin.Z6_2,
+        ZwallyBasin.Z7_1,
+        ZwallyBasin.Z7_2,
+        ZwallyBasin.Z8_1,
+        ZwallyBasin.Z8_2,
+    ],
+}
+REGIONS_RIGNOT: dict[IceSheet, list[RignotBasin]] = {
+    IceSheet.APIS: [RignotBasin.I_IPP, RignotBasin.IPP_J, RignotBasin.HP_I],
+    IceSheet.EAIS: [
+        RignotBasin.JPP_K,
+        RignotBasin.K_A,
+        RignotBasin.A_AP,
+        RignotBasin.AP_B,
+        RignotBasin.B_C,
+        RignotBasin.C_CP,
+        RignotBasin.CP_D,
+        RignotBasin.D_DP,
+        RignotBasin.DP_E,
+        RignotBasin.E_EP,
+    ],
+    IceSheet.WAIS: [
+        RignotBasin.J_JPP,
+        RignotBasin.EP_F,
+        RignotBasin.G_H,
+        RignotBasin.F_G,
+        RignotBasin.H_HP,
+    ],
+    IceSheet.GRIS: [
+        RignotBasin.NO,
+        RignotBasin.NE,
+        RignotBasin.SE,
+        RignotBasin.SW,
+        RignotBasin.CW,
+        RignotBasin.NW,
+    ],
+}

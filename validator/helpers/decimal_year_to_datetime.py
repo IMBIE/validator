@@ -8,5 +8,5 @@ def decimal_year_to_datetime(year: float) -> dt.datetime:
 
     year_days = 366 if calendar.isleap(int_year) else 365
     return dt.datetime(year=int_year, month=1, day=1) + dt.timedelta(
-        days=year_fraction * year_days
+        days=int(year_fraction * year_days)
     )
